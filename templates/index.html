@@ -23,7 +23,7 @@
       {% for blog_post in all_posts %}
 
       <div class="post-preview">
-        <a href="{{ url_for('get_blog',id=blog_post.id) }}">
+        <a href="{{ url_for('get_blog',index=blog_post.id) }}">
           <h2 class="post-title">
             {{blog_post.title}}
           </h2>
