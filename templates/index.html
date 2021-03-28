@@ -1,14 +1,14 @@
 {% include "header.html" %}
 
 <!-- Page Header -->
-<header class="masthead" style="background-image: url({{ url_for('static', filename='img/home-bg.jpg') }})">
+<header class="masthead" style="background-image: url('https://images.unsplash.com/photo-1546900703-cf06143d1239?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1591&q=80')">
   <div class="overlay"></div>
   <div class="container">
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto">
         <div class="site-heading">
           <h1>Shanu's Blog</h1>
-          <span class="subheading">A Blog Theme by Start Bootstrap</span>
+          <span class="subheading">Neque porro quisquam est qui dolorem.</span>
         </div>
       </div>
     </div>
@@ -23,7 +23,7 @@
       {% for blog_post in all_posts %}
 
       <div class="post-preview">
-        <a href="{{ url_for('get_blog',index=blog_post.id) }}">
+        <a href="{{ url_for('show_post', post_id=blog_post.id) }}">
           <h2 class="post-title">
             {{blog_post.title}}
           </h2>
@@ -31,19 +31,20 @@
             {{blog_post.subtitle}}
           </h3>
         </a>
-        <p class="post-meta">Posted by{{blog_post.author}}
-          <a href="#">Start Bootstrap</a>
-          {{blog_post.date}}</p>
+        <p class="post-meta">Posted by:
+          <a href="#">{{blog_post.author}}</a>
+          on {{blog_post.date}}
+          <a href="{{url_for('delete_post', post_id=blog_post.id) }}">✘</a>
+        </p>
       </div>
 
       {% endfor %}
 
       <hr>
-
-      <!-- Pager -->
+      <!--NEW POST-->
       <div class="clearfix">
-        <a class="btn btn-primary float-right" href="#">Older Posts &rarr;</a>
-      </div>
+          <a class="btn btn-primary float-right" href="{{url_for('add_new_post')}}">Create New Post</a>
+        </div>
     </div>
   </div>
 </div>
