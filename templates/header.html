@@ -38,13 +38,25 @@
       <div class="collapse navbar-collapse" id="navbarResponsive">
         <ul class="navbar-nav ml-auto">
           <li class="nav-item">
-            <a class="nav-link" href="/">Home</a>
+            <a class="nav-link" href="{{ url_for('get_all_posts') }}">Home</a>
+          </li>
+          {% if not logged_in %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/about">About</a>
+            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+          </li>
+          {% endif %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('logout') }}">Log Out</a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('about') }}">About</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/contact">Contact</a>
+            <a class="nav-link" href="{{ url_for('contact') }}">Contact</a>
           </li>
         </ul>
       </div>

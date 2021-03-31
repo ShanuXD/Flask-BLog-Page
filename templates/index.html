@@ -21,7 +21,6 @@
     <div class="col-lg-8 col-md-10 mx-auto">
 
       {% for blog_post in all_posts %}
-
       <div class="post-preview">
         <a href="{{ url_for('show_post', post_id=blog_post.id) }}">
           <h2 class="post-title">
@@ -32,19 +31,23 @@
           </h3>
         </a>
         <p class="post-meta">Posted by:
-          <a href="#">{{blog_post.author}}</a>
+          <a href="#">{{blog_post.author.name}}</a>
           on {{blog_post.date}}
+
+          {% if current_user.id == 1 %}
           <a href="{{url_for('delete_post', post_id=blog_post.id) }}">✘</a>
+          {% endif %}
         </p>
       </div>
-
       {% endfor %}
 
       <hr>
+      {% if current_user.id == 1 %}
       <!--NEW POST-->
       <div class="clearfix">
           <a class="btn btn-primary float-right" href="{{url_for('add_new_post')}}">Create New Post</a>
         </div>
+      {% endif %}
     </div>
   </div>
 </div>
