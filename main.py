@@ -1,15 +1,14 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, g, abort
+from flask import Flask, render_template, redirect, url_for, request, flash, abort
 from functools import wraps
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_ckeditor import CKEditor, CKEditorField
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.orm import relationship
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user, login_manager
 from flask_gravatar import Gravatar
 from datetime import date
 import smtplib
-from form import CreatePostForm, RegisterForm, LoginForm
+from form import CreatePostForm, RegisterForm, LoginForm, CommentForm
 from sqlalchemy import Table, Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -26,6 +25,8 @@ ckeditor = CKEditor(app)
 login_manager = LoginManager()
 Bootstrap(app)
 login_manager.init_app(app)
+gravatar = Gravatar(app, size=100, rating='g', default='retro', force_default=False, force_lower=False, use_ssl=False, base_url=None)
+
 
 #  CONNECT TO DB
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
@@ -46,7 +47,7 @@ def unauthorized():
     return render_template('index.html')
 
 
-# CREATE USER
+# CONFIGURE USER TABLE
 class User(UserMixin, db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
@@ -54,10 +55,10 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     posts = relationship("BlogPost", back_populates="author")
-    # comments = relationship("Comment", back_populates="comment_author")
+    comments = relationship("Comment", back_populates="comment_author")
 
 
-#  CONFIGURE TABLE
+#  CONFIGURE BLOG TABLE
 class BlogPost(db.Model):
     __tablename__ = "blog_posts"
     id = db.Column(db.Integer, primary_key=True)
@@ -68,17 +69,18 @@ class BlogPost(db.Model):
     date = db.Column(db.String(250), nullable=False)
     body = db.Column(db.Text, nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
-    # comments = relationship("Comment", back_populates="parent_post")
+    comments = relationship("Comment", back_populates="parent_post")
 
-#
-# class Comments(db.Model):
-#     __tablename__ = "comments"
-#     id = db.Column(db.Integer, primary_key=True)
-#     post_id = db.Column(db.Integer, db.ForeignKey("blog_posts.id"))
-#     author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-#     parent_post = relationship("BlogPost", back_populates="comments")
-#     comment_author = relationship("User", back_populates="comments")
-#     text = db.Column(db.Text, nullable=False)
+
+# CONFIGURE COMMENT TABLE
+class Comment(db.Model):
+    __tablename__ = "comments"
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey("blog_posts.id"))
+    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    parent_post = relationship("BlogPost", back_populates="comments")
+    comment_author = relationship("User", back_populates="comments")
+    text = db.Column(db.Text, nullable=False)
 
 
 db.create_all()
@@ -88,9 +90,8 @@ db.create_all()
 def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if current_user.user != 1:
+        if current_user.id != 1:
             return abort(403)
-            # return redirect(url_for('login', next=request.url))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -151,10 +152,25 @@ def logout():
 
 
 # RENDER POST USING DB
-@app.route("/post/<post_id>")
+@app.route("/post/<int:post_id>", methods=["GET", "POST"])
 def show_post(post_id):
+    form = CommentForm()
     requested_post = BlogPost.query.get(post_id)
-    return render_template("post.html", post=requested_post, )
+
+    if form.validate_on_submit():
+        if not current_user.is_authenticated:
+            flash("You need to login or register to comment.")
+            return redirect(url_for("login"))
+
+        new_comment = Comment(
+            text=form.comment_text.data,
+            comment_author=current_user,
+            parent_post=requested_post
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+
+    return render_template("post.html", post=requested_post, form=form, current_user=current_user)
 
 
 # STORE NEW POST INTO DB
@@ -169,14 +185,13 @@ def add_new_post():
             subtitle=form.subtitle.data,
             body=form.body.data,
             img_url=form.img_url.data,
-            author=form.author.data,
             date=date.today().strftime("%B %d, %Y")
         )
         db.session.add(new_post)
         db.session.commit()
         return redirect(url_for("get_all_posts"))
 
-    return render_template("make-post.html", form=form)
+    return render_template("make-post.html", form=form, current_user=current_user)
 
 
 # EDIT POST
@@ -188,19 +203,18 @@ def edit_post(post_id):
         title=post.title,
         subtitle=post.subtitle,
         img_url=post.img_url,
-        author=post.author,
+        author=current_user,
         body=post.body
     )
     if edit_form.validate_on_submit():
         post.title = edit_form.title.data
         post.subtitle = edit_form.subtitle.data
         post.img_url = edit_form.img_url.data
-        post.author = edit_form.author.data
         post.body = edit_form.body.data
         db.session.commit()
         return redirect(url_for("show_post", post_id=post.id))
 
-    return render_template("make-post.html", form=edit_form, is_edit=True)
+    return render_template("make-post.html", form=edit_form, is_edit=True, current_user=current_user)
 
 
 # DELETE POST
