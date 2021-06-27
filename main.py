@@ -12,6 +12,7 @@ from form import CreatePostForm, RegisterForm, LoginForm, CommentForm
 from sqlalchemy import Table, Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+import os
 
 Base = declarative_base()
 
@@ -20,7 +21,8 @@ MY_PASSWORD = "pcchater@160997"
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
+app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
+# app.config['SECRET_KEY'] = "secret"
 ckeditor = CKEditor(app)
 login_manager = LoginManager()
 Bootstrap(app)
@@ -29,7 +31,7 @@ gravatar = Gravatar(app, size=100, rating='g', default='retro', force_default=Fa
 
 
 #  CONNECT TO DB
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL",  "sqlite:///blog.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -98,12 +100,13 @@ def admin_only(f):
 
 # HOME PAGE
 @app.route('/')
-@login_required
+# @login_required
 def get_all_posts():
     posts = BlogPost.query.all()
     return render_template("index.html",
                            all_posts=posts,
-                           current_user=current_user)
+                           current_user=current_user,
+                           logged_in=current_user.is_authenticated)
 
 
 @app.route('/register', methods=["GET", "POST"])
