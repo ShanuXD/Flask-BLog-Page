@@ -16,13 +16,13 @@ import os
 
 Base = declarative_base()
 
-MY_EMAIL = "chaterprakash@gmail.com"
-MY_PASSWORD = "pcchater@160997"
+MY_EMAIL = "pythonprojecthowemailworks@gmail.com"
+MY_PASSWORD = "Test@12345"
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
-# app.config['SECRET_KEY'] = "secret"
+# app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
+app.config['SECRET_KEY'] = "secret"
 ckeditor = CKEditor(app)
 login_manager = LoginManager()
 Bootstrap(app)
@@ -245,7 +245,7 @@ def contact():
 def data_received():
     data = request.form
     print(data)
-    send_email(data["name"], data["email"], data["phone"], data["message"])
+    # send_email(data["name"], data["email"], data["phone"], data["message"])
     return render_template("form-entry.html")
 
 
@@ -255,6 +255,7 @@ def send_email(name, email, phone, message):
         connection.starttls()
         connection.login(MY_EMAIL, MY_PASSWORD)
         connection.sendmail(MY_EMAIL, 'shanu09.sm@gmail.com', email_message)
+        # connection.quit()
 
 
 if __name__ == "__main__":
